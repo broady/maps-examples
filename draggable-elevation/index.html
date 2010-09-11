@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Draggable elevation</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script src="http://maps.google.com/maps/api/js?sensor=true"></script>
+  <script type="text/javascript" charset="utf-8">
+  $(document).ready(function() {
+    var $$ = google.maps;
+    var recalcHeight = function() {
+      $("#map").height($(window).height() - $("form").height() - $("#elevation").height());
+    };
+    $(window).resize(recalcHeight);
+    recalcHeight();
+
+    for (o in $$.DirectionsTravelMode) if ($$.DirectionsTravelMode.hasOwnProperty(o)) {
+      $("#mode").append(new Option(o));
+    }
+
+    var map = new $$.Map($('#map')[0], {
+      center: new $$.LatLng(-33.86685, 151.19348),
+      mapTypeId: $$.MapTypeId.ROADMAP,
+      zoom: 10
+    });
+
+    var dr = new $$.DirectionsRenderer({
+      map: map,
+      draggable: true,
+      preserveViewport: true
+    });
+
+    var hoverMarker = new $$.Marker({
+      map: map
+    });
+    
+    $("#elevation").mouseleave(function() {
+      hoverMarker.setVisible(false);
+      $("#elevation-hover").hide();
+    });
+    
+    var es = new $$.ElevationService();
+    var ds = new $$.DirectionsService();
+    
+    var fitBounds = false;
+
+    $$.event.addListener(dr, 'directions_changed', function() {
+      /* hack */ setTimeout(function() {
+        var route = dr.getDirections().routes[dr.getRouteIndex()];
+        var path = route.overview_path;
+        es.getElevationAlongPath({ path: path, samples: path.length * 2 }, function(result, status) {
+          if (status == $$.ElevationStatus.OK) {
+            drawElevation(result);
+            recalcHeight();
+            if (fitBounds) {
+              map.fitBounds(route.bounds);
+              fitBounds = false;
+            }
+          }
+          else {
+            $('#error').text(status).show();
+          }
+          recalcHeight();
+        });
+      }, 0);
+    });
+
+
+    $('#directions-form').submit(function(e) {
+      $('#error').hide();
+      ds.route({
+        origin: $('#from').val(),
+        destination: $('#to').val(),
+        travelMode: $('#mode').val(),
+        unitSystem: $$.DirectionsUnitSystem.METRIC
+      }, function(result, status) {
+        if (status == $$.DirectionsStatus.OK) {
+          fitBounds = true;
+          dr.setDirections(result);
+        }
+        else {
+          $('#error').text(status).show();
+        }
+        recalcHeight();
+      });
+      e.preventDefault();
+      return false;
+    });
+    
+    var drawElevation = function(r) {
+      var max = writeStats(r);
+      drawGraph(r, max);
+    };
+
+    var writeStats = function(r) {
+      var prevElevation = r[0].elevation;
+      var climb = 0;
+      var drop = 0;
+      var max = 0;
+      for (var i = 1; i < r.length; i++) {
+        var diff = r[i].elevation - prevElevation;
+        prevElevation = r[i].elevation;
+        if (diff > 0) {
+          climb += diff;
+        }
+        else {
+          drop -= diff;
+        }
+
+        if (r[i].elevation > max) {
+          max = r[i].elevation;
+        }
+      }
+      max = Math.ceil(max);
+      $('#climb-drop').text("Climb: " + Math.round(climb) + "m Drop: " + Math.round(drop) + "m");
+      return max;
+    };
+    
+    var drawGraph = function(r, max) {
+      var ec = $("#elevation-chart").empty()
+
+      var width = Math.max(1, Math.floor(Math.min(11, ec.width() / r.length)) - 1);
+      var height = 100;
+      $.each(r, function(i, e) {
+        var barHeight = Math.round(e.elevation / max * height);
+        var bar = $("<div style='width:" + width + "px'><div style='height:" + barHeight + "px;'></div></div>");
+        ec.append(bar);
+        bar.mouseenter(function() {
+          var offset = bar.find("div").offset();
+          offset.top -= 25;
+          offset.left -= 3;
+          hoverMarker.setVisible(true);
+          hoverMarker.setPosition(e.location);
+          $("#elevation-hover").show().text(Math.round(e.elevation) + 'm').offset(offset);
+          if (!map.getBounds().contains(e.location)) {
+            map.panTo(e.location);
+          }
+        }).click(function() {
+          map.panTo(e.location);
+        });
+      });
+    };
+
+  });
+  </script>
+  <style type="text/css" media="screen">
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: sans-serif;
+  }
+  #map {
+    width: 100%;
+    height: 70%;
+  }
+  input[name] {
+    width: 20%;
+  }
+  #error {
+    background: red;
+    color: white;
+    font-size: 10px;
+    padding: 3px;
+    display: none;
+  }
+  #elevation-chart {
+    overflow: hidden;
+  }
+  #elevation-chart div {
+    float: left;
+    margin-right: 1px;
+    position: relative;
+    height: 100px;
+  }
+  #elevation-chart div div {
+    background: red;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+  #elevation-hover {
+    display: none;
+    background: #ffc;
+    border: 1px solid black;
+    border-radius: 5px;
+    position: absolute;
+    font-size: 10px;
+    padding: 3px;
+    -webkit-transform: rotate(-45deg); 
+    -moz-transform: rotate(-45deg);
+    z-index: 1;
+    cursor: default;
+  }
+  </style>
+</head>
+<body>
+  <form action="#" method="get" accept-charset="utf-8" id="directions-form">
+    <input id="from" name="from" value="South Coogee">
+    <input id="to" name="to" value="48 Pirrama Rd">
+    <select name="mode" id="mode">
+    </select>
+    <input type="submit" value="Elevate &rarr;">
+    <div id="error">
+    </div>
+  </form>
+  <div id="map">
+  </div>
+  <div id="elevation">
+    <div id="elevation-hover"></div>
+    <div id="climb-drop"></div>
+    <div id="elevation-chart"></div>
+  </div>
+</body>
+</html>
