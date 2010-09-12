@@ -48,7 +48,7 @@
       /* hack */ setTimeout(function() {
         var route = dr.getDirections().routes[dr.getRouteIndex()];
         var path = route.overview_path;
-        es.getElevationAlongPath({ path: path, samples: path.length * 2 }, function(result, status) {
+        es.getElevationAlongPath({ path: path, samples: Math.max(50, path.length * 2) }, function(result, status) {
           if (status == $$.ElevationStatus.OK) {
             drawElevation(result);
             recalcHeight();
