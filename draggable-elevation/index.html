@@ -140,7 +140,10 @@
         });
       });
     };
-
+    
+    $(".share").click(function() {
+      $(this).find("input").focus().select();
+    });
   });
   </script>
   <link rel="stylesheet" href="styles.css" type="text/css" media="screen" charset="utf-8">
@@ -152,6 +155,7 @@
     <select name="mode" id="mode">
     </select>
     <input type="submit" value="Elevate &rarr;">
+    <span class="share">Share this page: <input type="text" readonly value="http://goo.gl/v2UB/"> (shared routes coming soon!)</span>
     <div id="error">
     </div>
   </form>

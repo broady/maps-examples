@@ -47,3 +47,9 @@ input[name] {
   z-index: 1;
   cursor: default;
 }
+
+.share {
+  font-size: 10px;
+  float: right;
+  padding: 0 5px;
+}
