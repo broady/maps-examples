@@ -1,0 +1,49 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: sans-serif;
+}
+#map {
+  width: 100%;
+  height: 70%;
+}
+input[name] {
+  width: 20%;
+}
+#error {
+  background: red;
+  color: white;
+  font-size: 10px;
+  padding: 3px;
+  display: none;
+}
+#elevation-chart {
+  overflow: hidden;
+}
+#elevation-chart div {
+  float: left;
+  margin-right: 1px;
+  position: relative;
+  height: 100px;
+}
+#elevation-chart div div {
+  background: red;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+#elevation-hover {
+  display: none;
+  background: #ffc;
+  border: 1px solid black;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  position: absolute;
+  font-size: 10px;
+  padding: 3px;
+  -webkit-transform: rotate(-45deg); 
+  -moz-transform: rotate(-45deg);
+  z-index: 1;
+  cursor: default;
+}
