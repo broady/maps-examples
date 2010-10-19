@@ -41,7 +41,8 @@
     var myOptions = {
       zoom: 8,
       center: myLatlng,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      streetViewControl: false
     }
     
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
