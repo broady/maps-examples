@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<style type="text/css">
+  #container {
+    margin: 0 auto;
+    width: 600px;
+  }
+  #map_canvas, #map_canvas_reflection { height: 400px; width: 600px; }
+  #map_canvas_reflection > div {
+    -webkit-transform: scaley(-.5);
+  }
+  #map_canvas_reflection {
+    background: white !important;
+  }
+  #reflected_map {
+    position: relative;
+    top: -100px; /* 25% height */
+    z-index: -1;
+  }
+  .gradient {
+    background: -webkit-gradient(linear, 0% 0%, 0% 65%, from(rgba(255, 255, 255, .3)), to(rgba(255, 255, 255, 1)));
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
+  }
+</style>
+<title>Google Maps JavaScript API v3 Example: Map Simple</title>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript">
+  function initialize() {
+    var myLatlng = new google.maps.LatLng(-34.397, 150.644);
+    var myOptions = {
+      zoom: 8,
+      center: myLatlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    
+    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+    var mapReflection = new google.maps.Map(document.getElementById("map_canvas_reflection"), {disableDefaultUI: true});
+    bindAll(['center', 'zoom', 'mapTypeId', 'projection'], mapReflection, map);
+  }
+  
+  function bindAll(props, a, b) {
+    for (var i = props.length; i; i--) {
+      a.bindTo(props[i - 1], b);
+    }
+  }
+</script>
+</head>
+<body onload="initialize()">
+  <div id="container">
+    <div id="map_canvas"></div>
+    <div id="reflected_map">
+      <div class="gradient"></div>
+      <div id="map_canvas_reflection"></div>
+    </div>
+  </div>
+</body>
+</html>
