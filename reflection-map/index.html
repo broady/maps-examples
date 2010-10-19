@@ -11,6 +11,7 @@
   #map_canvas, #map_canvas_reflection { height: 400px; width: 600px; }
   #map_canvas_reflection > div {
     -webkit-transform: scaley(-.5);
+    -moz-transform: scaley(-.5);
   }
   #map_canvas_reflection {
     background: white !important;
@@ -22,6 +23,7 @@
   }
   .gradient {
     background: -webkit-gradient(linear, 0% 0%, 0% 65%, from(rgba(255, 255, 255, .3)), to(rgba(255, 255, 255, 1)));
+    background: -moz-linear-gradient(rgba(255, 255, 255, .3) 0%, rgba(255, 255, 255, 1) 65%);
     position: absolute;
     top: 0;
     left: 0;
