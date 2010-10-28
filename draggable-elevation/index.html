@@ -7,30 +7,29 @@
   <script src="http://maps.google.com/maps/api/js?sensor=true"></script>
   <script type="text/javascript" charset="utf-8">
   $(document).ready(function() {
-    var $$ = google.maps;
     var recalcHeight = function() {
       $("#map").height($(window).height() - $("form").height() - $("#elevation").height());
     };
     $(window).resize(recalcHeight);
     recalcHeight();
 
-    for (o in $$.DirectionsTravelMode) if ($$.DirectionsTravelMode.hasOwnProperty(o)) {
+    for (o in google.maps.DirectionsTravelMode) {
       $("#mode").append(new Option(o));
     }
 
-    var map = new $$.Map($('#map')[0], {
-      center: new $$.LatLng(-33.86685, 151.19348),
-      mapTypeId: $$.MapTypeId.ROADMAP,
+    var map = new google.maps.Map($('#map')[0], {
+      center: new google.maps.LatLng(-33.86685, 151.19348),
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
       zoom: 10
     });
 
-    var dr = new $$.DirectionsRenderer({
+    var dr = new google.maps.DirectionsRenderer({
       map: map,
       draggable: true,
       preserveViewport: true
     });
 
-    var hoverMarker = new $$.Marker({
+    var hoverMarker = new google.maps.Marker({
       map: map
     });
     
@@ -39,17 +38,20 @@
       $("#elevation-hover").hide();
     });
     
-    var es = new $$.ElevationService();
-    var ds = new $$.DirectionsService();
+    var es = new google.maps.ElevationService();
+    var ds = new google.maps.DirectionsService();
     
     var fitBounds = false;
 
-    $$.event.addListener(dr, 'directions_changed', function() {
+    google.maps.event.addListener(dr, 'directions_changed', function() {
       /* hack */ setTimeout(function() {
         var route = dr.getDirections().routes[dr.getRouteIndex()];
         var path = route.overview_path;
-        es.getElevationAlongPath({ path: path, samples: Math.max(50, path.length * 2) }, function(result, status) {
-          if (status == $$.ElevationStatus.OK) {
+        es.getElevationAlongPath({
+          path: path,
+          samples: Math.max(50, path.length * 2)
+        }, function(result, status) {
+          if (status == google.maps.ElevationStatus.OK) {
             drawElevation(result);
             recalcHeight();
             if (fitBounds) {
@@ -65,16 +67,15 @@
       }, 0);
     });
 
-
     $('#directions-form').submit(function(e) {
       $('#error').hide();
       ds.route({
         origin: $('#from').val(),
         destination: $('#to').val(),
         travelMode: $('#mode').val(),
-        unitSystem: $$.DirectionsUnitSystem.METRIC
+        unitSystem: google.maps.DirectionsUnitSystem.METRIC
       }, function(result, status) {
-        if (status == $$.DirectionsStatus.OK) {
+        if (status == google.maps.DirectionsStatus.OK) {
           fitBounds = true;
           dr.setDirections(result);
         }
