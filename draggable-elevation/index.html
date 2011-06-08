@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <title>Draggable elevation</title>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script src="http://maps.google.com/maps/api/js?sensor=true"></script>
   <script type="text/javascript" charset="utf-8">
   $(document).ready(function() {
     var recalcHeight = function() {
       $("#map").height($(window).height() - $("form").height() - $("#elevation").height());
+      map && google.maps.event.trigger(map, 'resize');
     };
     $(window).resize(recalcHeight);
     recalcHeight();
@@ -32,39 +33,37 @@
     var hoverMarker = new google.maps.Marker({
       map: map
     });
-    
+
     $("#elevation").mouseleave(function() {
       hoverMarker.setVisible(false);
       $("#elevation-hover").hide();
     });
-    
+
     var es = new google.maps.ElevationService();
     var ds = new google.maps.DirectionsService();
-    
+
     var fitBounds = false;
 
     google.maps.event.addListener(dr, 'directions_changed', function() {
-      /* hack */ setTimeout(function() {
-        var route = dr.getDirections().routes[dr.getRouteIndex()];
-        var path = route.overview_path;
-        es.getElevationAlongPath({
-          path: path,
-          samples: Math.max(50, path.length * 2)
-        }, function(result, status) {
-          if (status == google.maps.ElevationStatus.OK) {
-            drawElevation(result);
-            recalcHeight();
-            if (fitBounds) {
-              map.fitBounds(route.bounds);
-              fitBounds = false;
-            }
-          }
-          else {
-            $('#error').text(status).show();
-          }
+      var route = dr.getDirections().routes[0];
+      var path = route.overview_path;
+      es.getElevationAlongPath({
+        path: path,
+        samples: Math.max(50, path.length * 2)
+      }, function(result, status) {
+        if (status == google.maps.ElevationStatus.OK) {
+          drawElevation(result);
           recalcHeight();
-        });
-      }, 0);
+          if (fitBounds) {
+            map.fitBounds(route.bounds);
+            fitBounds = false;
+          }
+        }
+        else {
+          $('#error').text(status).show();
+        }
+        recalcHeight();
+      });
     });
 
     $('#directions-form').submit(function(e) {
@@ -72,8 +71,7 @@
       ds.route({
         origin: $('#from').val(),
         destination: $('#to').val(),
-        travelMode: $('#mode').val(),
-        unitSystem: google.maps.DirectionsUnitSystem.METRIC
+        travelMode: $('#mode').val()
       }, function(result, status) {
         if (status == google.maps.DirectionsStatus.OK) {
           fitBounds = true;
@@ -87,7 +85,7 @@
       e.preventDefault();
       return false;
     });
-    
+
     var drawElevation = function(r) {
       var max = writeStats(r);
       drawGraph(r, max);
@@ -116,7 +114,7 @@
       $('#climb-drop').text("Climb: " + Math.round(climb) + "m Drop: " + Math.round(drop) + "m");
       return max;
     };
-    
+
     var drawGraph = function(r, max) {
       var ec = $("#elevation-chart").empty()
 
@@ -141,7 +139,7 @@
         });
       });
     };
-    
+
     $(".share").click(function() {
       $(this).find("input").focus().select();
     });
@@ -153,15 +151,12 @@
   <form action="#" method="get" accept-charset="utf-8" id="directions-form">
     <input id="from" name="from" value="Bondi Beach, Sydney Australia">
     <input id="to" name="to" value="48 Pirrama Rd, Sydney Australia">
-    <select name="mode" id="mode">
-    </select>
+    <select name="mode" id="mode"></select>
     <input type="submit" value="Elevate &rarr;">
     <span class="share">Share this page: <input type="text" readonly value="http://goo.gl/v2UB"></span>
-    <div id="error">
-    </div>
+    <div id="error"></div>
   </form>
-  <div id="map">
-  </div>
+  <div id="map"></div>
   <div id="elevation">
     <div id="elevation-hover"></div>
     <div id="climb-drop"></div>
