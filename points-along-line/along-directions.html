@@ -52,7 +52,7 @@
       var leg = google.maps.geometry.spherical.computeLength(path.slice(0, 2));
       if (seg > leg) {
         // point is in the next segment
-        return findNext(path.slice(1), seg - leg);
+        return findNextPoint(path.slice(1), seg - leg);
       }
       var target = google.maps.geometry.spherical.interpolate(path[0], path[1], seg/leg);
       path[0] = target;
