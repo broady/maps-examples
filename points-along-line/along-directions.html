@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css">
+<title>100 points along a line</title>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&libraries=geometry"></script>
+<script type="text/javascript">
+  function initialize() {
+    var myLatlng = new google.maps.LatLng(-32.02, 115.85464);
+    var myOptions = {
+      zoom: 12,
+      center: myLatlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+    var ds = new google.maps.DirectionsService;
+    ds.route({ origin: '-31.95875, 115.85464', destination: '-32.05915, 115.7449', travelMode: 'DRIVING' }, function(r) { draw(r.routes[0]) })
+
+    function draw(route) {
+      new google.maps.Polyline({
+        path: route.overview_path,
+        map: map
+      });
+
+      var points = getPointsAlongLine(route.overview_path, 100);
+      for (var i = 0; i < points.length; i++) {
+        new google.maps.Marker({
+          position: points[i],
+          map: map
+        });
+      }
+    }
+
+    function getPointsAlongLine(path, num) {
+      var dist = google.maps.geometry.spherical.computeLength(path);
+      var seg = dist/num;
+      var result = [path[0]];
+      while (path.length > 1) {
+        path = findNextPoint(path, seg);
+        result.push(path[0]);
+      }
+      return result;
+    }
+
+    function findNextPoint(path, seg) {
+      if (path.length < 2) {
+        return [path[path.length - 1]];
+      }
+      var leg = google.maps.geometry.spherical.computeLength(path.slice(0, 2));
+      if (seg > leg) {
+        // point is in the next segment
+        return findNext(path.slice(1), seg - leg);
+      }
+      var target = google.maps.geometry.spherical.interpolate(path[0], path[1], seg/leg);
+      path[0] = target;
+      return path;
+    }
+  }
+</script>
+</head>
+<body onload="initialize()">
+  <div id="map_canvas"></div>
+</body>
+</html>
