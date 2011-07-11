@@ -27,6 +27,12 @@
       position: absolute;
       left: 60px;
     }
+    #panel {
+      position: absolute;
+      top: 0;
+      left: 530px;
+      width: 300px;
+    }
   </style>
 
   <script>
@@ -39,7 +45,11 @@
       var map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
       var directionsService = new google.maps.DirectionsService;
-      var directionsRenderer = new google.maps.DirectionsRenderer;
+      var directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        draggable: true,
+        panel: document.getElementById('panel')
+      });
 
       var from = document.getElementById('from');
       from = new google.maps.places.Autocomplete(from);
@@ -60,7 +70,6 @@
           directionsService.route(request, function(response, status) {
             if (status == google.maps.DirectionsStatus.OK) {
               directionsRenderer.setDirections(response);
-              directionsRenderer.setMap(map);
             }
           });
         }
@@ -81,5 +90,6 @@
     To: <input id="to" type="text" size="50">
   </label>
   <div id="map"></div>
+  <div id="panel"></div>
 </body>
 </html>
