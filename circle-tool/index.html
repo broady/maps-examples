@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Circle Tool</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=geometry"
+        type="text/javascript"></script>
+
+    <script type="text/javascript">
+      var map, centerMarker, edgeMarker, circle;
+      function initialize() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 8,
+          center: new google.maps.LatLng(-33.871845794873295, 151.18713659668),
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        var dot = new google.maps.MarkerImage(DOT_IMAGE,null, null,
+            new google.maps.Point(6, 6));
+
+        var markerOptions = {
+          draggable: true,
+          icon: dot,
+          map: map,
+          raiseOnDrag: false,
+          zIndex: 1
+        };
+
+        centerMarker = new google.maps.Marker(markerOptions);
+
+        // Put the edgeMarker below so that on low zoom levels, the center is
+        // dragged, not the edge.
+        markerOptions.zIndex = 0;
+
+        edgeMarker = new google.maps.Marker(markerOptions);
+        edgeMarker.bearing = 90;
+
+        circle = new google.maps.Circle({
+          clickable: false,
+          fillColor: 'orange',
+          radius: 10000,
+          strokeColor: 'brown',
+          map: map
+        });
+        circle.bindTo('center', centerMarker, 'position');
+
+        setupControls();
+
+        google.maps.event.addListener(centerMarker, 'position_changed', function() {
+          // Move the edge marker along with the center marker
+          var newPosition = google.maps.geometry.spherical.computeOffset(
+            centerMarker.getPosition(), circle.getRadius(), edgeMarker.bearing);
+          edgeMarker.setPosition(newPosition);
+        });
+
+        google.maps.event.addListener(edgeMarker, 'position_changed', function() {
+          // Update the circle's radius
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(
+              centerMarker.getPosition(), edgeMarker.getPosition());
+
+          circle.setRadius(dist);
+
+          // Update the marker's bearing, so that the edge marker can
+          // continuouslystay at the same offset from the center marker.
+          edgeMarker.bearing = google.maps.geometry.spherical.computeHeading(
+            centerMarker.getPosition(), edgeMarker.getPosition());
+        });
+
+        centerMarker.setPosition(map.getCenter());
+
+        google.maps.event.addListener(map, 'projection_changed', centerOnCircle);
+      }
+
+      /*
+       * Updates the viewport to include the whole circle. Pretty hacky, without
+       * a getZoomLevelForBounds method, or more calculations (choosing
+       * {north,east,south,west}most points). Works surprisingly well.
+       */
+      function centerOnCircle() {
+        var bounds = new google.maps.LatLngBounds;
+        bounds.extend(edgeMarker.getPosition());
+        bounds.extend(centerMarker.getPosition());
+        map.fitBounds(bounds);
+        map.setCenter(centerMarker.getPosition());
+        map.setZoom(map.getZoom() - 2);
+      }
+
+      /*
+       * Adds the radius and 'center on circle' controls.
+       */
+      function setupControls() {
+        // 'Center on circle'
+        var button = document.createElement('button');
+        map.controls[google.maps.ControlPosition.TOP_RIGHT].push(button);
+        button.innerHTML = 'Center on circle';
+
+        google.maps.event.addDomListener(button, 'click', centerOnCircle);
+
+        // Radius control
+        var radiusControl = document.createElement('div');
+        radiusControl.id = 'radius-control';
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(radiusControl);
+
+        google.maps.event.addListener(circle, 'radius_changed', function() {
+          radiusControl.innerHTML = parseInt(circle.getRadius()) + 'm';
+        });
+      }
+      google.maps.event.addDomListener(window, 'load', initialize);
+
+      var DOT_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAM' +
+      'CAYAAABWdVznAAAAu0lEQVQoFWP8//8/Awg0MjKyqWhopDMwMkYzMjJqg8SAcleBxNI7N2' +
+      '7MrP///xdIjBGkYZG6ujQzC8sWRgYGA5AgOgAaeeHvnz8+cTdvPmUCmYxPMUgzyCCQGrDa' +
+      'FA2NLKATEtFNRecDNUkICQu/ZgK5GV0SJx+olgnmQZyKkCRAapmQ+EQxmcBBR5RSSDAzgc' +
+      'KZSPUgHUuZQJECCmdCmkBqQGqZQDEIihR8mmARB1ILjmmQ6aBIISZpAADdQl+0SyzoNQAA' +
+      'AABJRU5ErkJggg==';
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
